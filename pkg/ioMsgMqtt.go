@@ -10,41 +10,40 @@ import (
 )
 
 var MqttMsgRsp bool
-var MqttClient mqtt.Client
 var MqttToken mqtt.Token
 var MqttOptions *mqtt.ClientOptions
 
 func MQTTSendMessageAutomatic(msg utilsPkg.ExitPayloadMsg) bool {
 
-	// data := utilsPkg.MqttMsgStruct{
-	// 	Address: utilsPkg.Address{
-	// 		Address: msg.Address,
-	// 		Port:    msg.Port,
-	// 		Name:    msg.Name,
-	// 		Others:  msg.Others,
-	// 	},
-	// 	ReadTimeStamp: msg.ReadTimeStamp, //.Format(time.RFC3339),
-	// 	Protocol:      msg.Protocol,
-	// 	Data: utilsPkg.Data{
-	// 		BitMemories:  msg.BitMemories,
-	// 		WordMemories: msg.WordMemories,
-	// 	},
-	// }
-
-	data := utilsPkg.InputMQTTMsg{
-		Operation: "testando o teste",
+	data := utilsPkg.MqttMsgStruct{
+		Address: utilsPkg.Address{
+			Address: msg.Address,
+			Port:    msg.Port,
+			Name:    msg.Name,
+			Others:  msg.Others,
+		},
+		ReadTimeStamp: msg.ReadTimeStamp, //.Format(time.RFC3339),
+		Protocol:      msg.Protocol,
+		Data: utilsPkg.Data{
+			BitMemories:  msg.BitMemories,
+			WordMemories: msg.WordMemories,
+		},
 	}
+
+	// data := utilsPkg.InputMQTTMsg{
+	// 	Operation: "testando o teste",
+	// }
 
 	jsonPayload, err := json.Marshal(data)
 	if err != nil {
 		panic(err) //Check - não pode parar o programa
 	}
 
-	if !MqttClient.IsConnected() {
+	if !utilsPkg.MqttClient.IsConnected() {
 		fmt.Printf("ioMsgMqtt:MQTTSendMessageAutomatic: FAIL to connect with MQTT")
 	} else {
 		for _, channelMqtt := range msg.Topics {
-			token := MqttClient.Publish(channelMqtt, 0, false, jsonPayload)
+			token := utilsPkg.MqttClient.Publish(channelMqtt, 0, false, jsonPayload)
 			token.Wait()
 
 			if token.Error() != nil {

@@ -1,14 +1,16 @@
 package pkg
 
-import (	
+import (
 	"time"
+
 	utilsPkg "github.com/holdenoffmenn/modbus/utils"
+
 	//mqtt "github.com/eclipse/paho.mqtt.golang"
+	"fmt"
+
 	modbusLib "github.com/goburrow/modbus"
 	"github.com/holdenoffmenn/functions"
-	"fmt"	
 )
-	
 
 type MemoryInfoBit struct {
 	Format  uint8  `json:"format"`
@@ -33,8 +35,7 @@ var connectionTry int = 0
 var readHour time.Time
 
 // ReadInfoMdbs will read informations from device
-func ReadInfoMdbs(dev utilsPkg.DevSettings, controller *utilsPkg.RoutineController) {
-	loop := true
+func ReadInfoMdbs(dev utilsPkg.DevSettings) {
 	//Start Connection
 	conn := modbusLib.NewTCPClientHandler(dev.Address + ":" + dev.Port)
 	conn.Timeout = 3 * time.Minute
@@ -60,7 +61,8 @@ func ReadInfoMdbs(dev utilsPkg.DevSettings, controller *utilsPkg.RoutineControll
 		readTime := readHour.Format("2006-01-02 15:04:05")
 
 		//loop infinito de verificação, repetindo conforme o tempo informado no arquivo config.json
-		for {
+		for utilsPkg.LoopModbus {
+			fmt.Println("-----> AINDA RODANDO ==> ", dev.Name)
 			fmt.Printf("routineMdbRead: dev name[%s]  Address[%s:%s] readTime[%v]Reading\n",
 				dev.Name, dev.Address, dev.Port, readTime)
 			if len(plcInfo.BitMemories) != 0 {
@@ -131,7 +133,7 @@ func ReadInfoMdbs(dev utilsPkg.DevSettings, controller *utilsPkg.RoutineControll
 				_ = MQTTSendMessageAutomatic(msg)
 			}
 
-			if !loop {
+			if !utilsPkg.LoopModbus {
 				// Thread do dispositivo foi encerrada
 				fmt.Printf("routineMdbRead: dev name[%s]  Ip[%s:%s] Encerrada em %v\n",
 					dev.Name, dev.Address, dev.Port, dev.ReadingTime)
@@ -148,6 +150,10 @@ func ReadInfoMdbs(dev utilsPkg.DevSettings, controller *utilsPkg.RoutineControll
 			readHour = time.Now()
 			readTime = readHour.Format("2006-01-02 15:04:05")
 		}
+
+		fmt.Println("SAIU DO LOOP")
+
+		//}
 
 	}
 }

@@ -3,18 +3,27 @@ package main
 import (
 	"fmt"
 	"time"
-	utilsPkg "github.com/holdenoffmenn/modbus/utils"
+
 	configsPkg "github.com/holdenoffmenn/modbus/configs"
 )
 
 func main() {
-	
 	fmt.Println("Starting MODBUS...")
-	//conectar no broker
-	configsPkg.Starting()
-
-	for utilsPkg.Loop {
-		fmt.Println("Checking...")
-		time.Sleep(1000 * time.Millisecond)
+	err := startingLocalBroker()
+	if err != nil {
+		fmt.Println("FAIL - Is not possible start communication with broker")
+		return
 	}
+	configsPkg.StartModbus()
+
+	for {
+		fmt.Println("Checking...")
+		time.Sleep(20000 * time.Millisecond)
+	}
+}
+
+func startingLocalBroker() error {
+	configsPkg.SetMqttBroker()
+	err := configsPkg.MqttCommunication()
+	return err
 }

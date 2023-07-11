@@ -2,19 +2,34 @@ package configs
 
 import (
 	"fmt"
-	//"os"
-	//utilsPkg "github.com/holdenoffmenn/modbus/utils"
+	"os"
+
 	mqtt "github.com/eclipse/paho.mqtt.golang"
 	"github.com/google/uuid"
 	"github.com/holdenoffmenn/modbus/pkg"
+	utilsPkg "github.com/holdenoffmenn/modbus/utils"
 )
 
 var MqttMsgRsp bool
-var MqttClient mqtt.Client
 var MqttToken mqtt.Token
 var MqttOptions *mqtt.ClientOptions
 
-func MqttCommunication() mqtt.Client {
+var MqttBrokerInfo utilsPkg.ConfigMQTT
+var Hostname string
+
+func SetMqttBroker() {
+	fmt.Println("Starting assign values to public variables.")
+	MqttBrokerInfo = utilsPkg.ConfigMQTT{
+		Server:   utilsPkg.MqttAddress,
+		Port:     utilsPkg.MqttPort,
+		Username: utilsPkg.MqttUser,
+		Password: utilsPkg.MqttPassword,
+	}
+
+	Hostname, _ = os.Hostname()
+}
+
+func MqttCommunication() error {
 
 	if MqttBrokerInfo.Server == "" || MqttBrokerInfo.Port == "" {
 		fmt.Printf("mqttInit:MqttComunication: Server[%s] or Port[%s] is empty. \n",
@@ -23,15 +38,15 @@ func MqttCommunication() mqtt.Client {
 		fmt.Printf("mqttInit:MqttCommunication: Starting communication with Broker MQTT[%s:%s]\n",
 			MqttBrokerInfo.Server, MqttBrokerInfo.Port)
 
-		var messageHandler mqtt.MessageHandler = func(client mqtt.Client, msg mqtt.Message) {			
-			//TODO - Recebe a mensagem e faz uma chamada. Criar as go routines com canais a partir daqui
-			inMsg, err := pkg.MsgMQTTInput(msg, MqttClient)
+		var messageHandler mqtt.MessageHandler = func(client mqtt.Client, msg mqtt.Message) {
+			inMsg, err := pkg.MsgMQTTInput(msg, utilsPkg.MqttClient)
 			if err != nil {
-				fmt.Println(err)
+				fmt.Printf("mqttInit:MqttCommunication: Receiving MQTT message failed. Device:[%s:%s] Error:[%s]\n",
+					MqttBrokerInfo.Server, MqttBrokerInfo.Port, err)
 			} else {
 				DecodeMsg(inMsg)
 			}
-		}		
+		}
 
 		MqttOptions = mqtt.NewClientOptions()
 		MqttOptions.AddBroker(MqttBrokerInfo.Server + ":" + MqttBrokerInfo.Port)
@@ -44,26 +59,45 @@ func MqttCommunication() mqtt.Client {
 			if MqttToken = c.Subscribe("modbus", 0, messageHandler); MqttToken.Wait() && MqttToken.Error() != nil {
 				fmt.Printf("%v", MqttToken.Error())
 			}
-			if MqttToken = c.Subscribe("fails", 0, messageHandler); MqttToken.Wait() && MqttToken.Error() != nil {
-				fmt.Printf("%v", MqttToken.Error())
-			}
 		}
 
-		MqttClient = mqtt.NewClient(MqttOptions)
-		MqttToken = MqttClient.Connect()
+		utilsPkg.MqttClient = mqtt.NewClient(MqttOptions)
+		MqttToken = utilsPkg.MqttClient.Connect()
 
 		if MqttToken.Wait() && MqttToken.Error() != nil {
 			fmt.Printf("mqttInit:MqttCommunication: Fail to connect with Broker Ip:Port(%s:%s)\n",
 				MqttBrokerInfo.Server, MqttBrokerInfo.Port)
+			return MqttToken.Error()
+			//TODO: Verificar como ficar tentando a conexão por um tempo
 		} else {
 			fmt.Printf("mqttInit:MqttCommunication: MQTT Client is Connected to MQTT Brocker Ip:Port[%s:%s]\n",
 				MqttBrokerInfo.Server, MqttBrokerInfo.Port)
 		}
-		//cfgPkg.SettingsMqtt = mqttSet
-		return MqttClient
+
+		return nil
 	}
 
-	//cfgPkg.SettingsMqtt = mqttSet
-	return MqttClient
+	return fmt.Errorf("Missing_Informations")
 
+}
+
+func DecodeMsg(msg utilsPkg.InputMQTTMsg) {
+	switch msg.Action {
+	case "start":
+		fmt.Println("Start Modbus")
+		StartModbus()
+	case "restart":
+		fmt.Println("Reboot Modbus")
+	case "stop":
+		fmt.Println("Stop Modbus")
+		// close(utilsPkg.StopChan)
+		// utilsPkg.WgGoroutines.Wait()		
+		
+		//utilsPkg.Wg.Wait()
+		utilsPkg.LoopModbus = false
+		fmt.Println("Leitura do Modbus concluída.")
+
+	default:
+		fmt.Println("Wrong Command")
+	}
 }

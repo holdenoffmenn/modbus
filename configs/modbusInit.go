@@ -10,75 +10,73 @@ import (
 	utilsPkg "github.com/holdenoffmenn/modbus/utils"
 )
 
-// "encoding/json"
-// "fmt"
-// "os"
-
-//var pathConfigFileMQTT string
 var devInf []utilsPkg.Devices
-var itemInf []utilsPkg.DevSettings
 
-func StartModbus(controller *utilsPkg.RoutineController) {
-	//Ler as configurações do arquivo
-	devices := GetDevConfig()
-	StartRead(devices, controller)
-
-	// Inicie as goroutines iniciais com base no arquivo atual
-	//startInitialRoutines("dados.txt", controller)
+func StartModbus() {
+	utilsPkg.LoopModbus = true
+	devices, err := GetDevConfig()
+	if err != nil {
+		fmt.Printf("FAIL - Unable to capture data from plcConfig.json file. Error [%s]", err)
+		return
+	}
+	StartRead(devices)
 
 }
 
-func GetDevConfig() []utilsPkg.DevSettings{
-
+func GetDevConfig() ([]utilsPkg.DevSettings, error) {
+	var itemInf []utilsPkg.DevSettings
 	var devConfig string = "plcConfig.json"
+
 	file, err := os.ReadFile(devConfig)
 	if err != nil {
 		fmt.Println("Fail to read JSON File: ", err)
-		return nil
+		return nil, err
 	}
 
 	err = json.Unmarshal(file, &devInf)
 	if err != nil {
 		fmt.Println("FAIL to decode JSON file")
 		fmt.Printf("%v", err)
-		return nil
+		return nil, err
 	}
 
+	//Seleciona apenas os dispositivos com protocolo
 	for _, dev := range devInf {
 		for _, item := range dev.Devices {
-			itemInf = append(itemInf,
-				utilsPkg.DevSettings{
-					Address:     item.Address,
-					Port:        item.Port,
-					Name:        item.Name,
-					Protocol:    item.Protocol,
-					ReadingTime: item.ReadingTime,
-					Topics:      item.Topics,
-					Data:        item.Data,
-				})
+			if item.Protocol == "modbus" {
+				itemInf = append(itemInf,
+					utilsPkg.DevSettings{
+						Address:     item.Address,
+						Port:        item.Port,
+						Name:        item.Name,
+						Protocol:    item.Protocol,
+						ReadingTime: item.ReadingTime,
+						Topics:      item.Topics,
+						Data:        item.Data,
+					})
+			}
 		}
 	}
-	return itemInf
+	return itemInf, nil
 }
 
+func StartRead(devices []utilsPkg.DevSettings) {
 
-func StartRead(devices []utilsPkg.DevSettings, controller *utilsPkg.RoutineController) {
 	for _, device := range devices {
-		if device.Protocol == "modbus" {
-			fmt.Printf("StartRead: Name[%s] Protocol[%s] Ip:Port[%s:%s]\n",
-				device.Name, device.Protocol, device.Address, device.Port)
-			
-			statusPlc := packages.ConnModbus(device)
-			if statusPlc {
-				//modbusPkg.MQTTSendStatusDevice(device, SettingsMqtt, statusPlc)
-				go packages.ReadInfoMdbs(device, controller)
-			} else {
-				fmt.Println("Erro - Dispositivo não está online")
-				//modbusPkg.MQTTSendStatusDevice(device, SettingsMqtt, statusPlc)
-			}
+		fmt.Printf("StartRead: Name[%s] Protocol[%s] Ip:Port[%s:%s]\n",
+			device.Name, device.Protocol, device.Address, device.Port)
 
+		statusPlc := packages.ConnModbus(device)
+		if statusPlc {
+			//modbusPkg.MQTTSendStatusDevice(device, SettingsMqtt, statusPlc)
+			go packages.ReadInfoMdbs(device)
+
+			//go packages.ReadInfoMdbs(device, controller)
+		} else {
+			fmt.Println("Erro - Dispositivo não está online")
+			//modbusPkg.MQTTSendStatusDevice(device, SettingsMqtt, statusPlc)
 		}
-		
+
 		time.Sleep(1 * time.Second)
 	}
 
