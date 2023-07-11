@@ -25,7 +25,7 @@ type InputMQTTMsg struct {
 	Action string `json:"action"`
 }
 
-	var StopChan chan struct{} // Canal de sinalização para encerrar as goroutines
+	var StopChan chan bool // Canal de sinalização para encerrar as goroutines
 	var DoneChan chan bool
 	var Wg       sync.WaitGroup // WaitGroup para aguardar a conclusão das goroutines
 	var WgGoroutines sync.WaitGroup

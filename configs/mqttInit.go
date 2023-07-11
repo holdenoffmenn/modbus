@@ -90,10 +90,11 @@ func DecodeMsg(msg utilsPkg.InputMQTTMsg) {
 		fmt.Println("Reboot Modbus")
 	case "stop":
 		fmt.Println("Stop Modbus")
-		// close(utilsPkg.StopChan)
-		// utilsPkg.WgGoroutines.Wait()		
-		
-		//utilsPkg.Wg.Wait()
+		utilsPkg.LoopModbus = false
+		utilsPkg.Wg.Wait()
+		//close(utilsPkg.StopChan)
+		// utilsPkg.WgGoroutines.Wait()
+
 		utilsPkg.LoopModbus = false
 		fmt.Println("Leitura do Modbus concluída.")
 

@@ -61,99 +61,105 @@ func ReadInfoMdbs(dev utilsPkg.DevSettings) {
 		readTime := readHour.Format("2006-01-02 15:04:05")
 
 		//loop infinito de verificação, repetindo conforme o tempo informado no arquivo config.json
-		for utilsPkg.LoopModbus {
-			fmt.Println("-----> AINDA RODANDO ==> ", dev.Name)
-			fmt.Printf("routineMdbRead: dev name[%s]  Address[%s:%s] readTime[%v]Reading\n",
-				dev.Name, dev.Address, dev.Port, readTime)
-			if len(plcInfo.BitMemories) != 0 {
-
-				// Varre items configurados no arquivo config.json
-				for _, itemMemories := range plcInfo.BitMemories {
-					resultBit, err := readBitMemory(uint8(plcInfo.SlaveID), clientModbus, itemMemories.Address)
-					if err != nil {
-						//Forçar o fechamento da conexão
-						conn.Close()
-						//Adiciona FAIL como valor na chave que houve falha de leitura
-						resultsGetBitMemories[itemMemories.Name] = resultBit
-						//Chama o loop de verificação de conexão
-						_ = connCheck(conn)
-					} else {
-						// Salva o resultado encontrado
-						resultsGetBitMemories[itemMemories.Name] = resultBit
-					}
-
-				}
-
-			}
-			if len(plcInfo.WordMemories) != 0 {
-				// Varre items configurados no arquivo config.json
-				for _, itemMemories := range plcInfo.WordMemories {
-					resultWord, err := readWordMemory(
-						plcInfo.SlaveID,
-						clientModbus,
-						itemMemories.Address,
-						itemMemories.Format)
-
-					if err != nil {
-						//Forçar o fechamento e reabertura da conexão
-						conn.Close()
-						resultsGetWordMemories[itemMemories.Name] = resultWord
-						_ = connCheck(conn)
-					} else {
-						resultsGetWordMemories[itemMemories.Name] = resultWord
-					}
-				}
-
-			}
-
-			changesBit := functions.CompareMapsStrIFace(lastBitMemories, resultsGetBitMemories)
-			changesWord := functions.CompareMapsStrIFace(lastWordMemories, resultsGetWordMemories)
-
-			if !changesBit && !changesWord {
-				// Não houve alterações
-				fmt.Printf("routineMdbRead: dev name[%s]  Ip[%s:%s] No  Changes Oddurred - Sleeping %v Seconds...\n",
-					dev.Name, dev.Address, dev.Port, dev.ReadingTime)
-			} else {
-				// Holve alguma alteração gerar payload JSON da resposta
-				msg := utilsPkg.ExitPayloadMsg{
-					Address:       dev.Address,
-					Port:          dev.Port,
-					Name:          dev.Name,
-					Others:        "",
-					Protocol:      dev.Protocol,
-					ReadTimeStamp: readTime,
-					Topics:        dev.Topics,
-					BitMemories:   resultsGetBitMemories,
-					WordMemories:  resultsGetWordMemories,
-				}
-				fmt.Printf("Bit results in [%s] - [%v]\n", dev.Name, resultsGetBitMemories)
-				fmt.Printf("Word results in [%s] - [%v]\n", dev.Name, resultsGetWordMemories)
-
-				// Enviar payload json da mensagem
-				_ = MQTTSendMessageAutomatic(msg)
-			}
-
-			if !utilsPkg.LoopModbus {
-				// Thread do dispositivo foi encerrada
-				fmt.Printf("routineMdbRead: dev name[%s]  Ip[%s:%s] Encerrada em %v\n",
-					dev.Name, dev.Address, dev.Port, dev.ReadingTime)
+		for {
+			select {
+			case <-utilsPkg.DoneChan:
+				fmt.Printf("\n\nLeitura do IP [%s] interrompida.\n\n", dev.Name)
 				return
+			default:
+
+				fmt.Println("-----> AINDA RODANDO ==> ", dev.Name)
+				fmt.Printf("routineMdbRead: dev name[%s]  Address[%s:%s] readTime[%v]Reading\n",
+					dev.Name, dev.Address, dev.Port, readTime)
+				if len(plcInfo.BitMemories) != 0 {
+
+					// Varre items configurados no arquivo config.json
+					for _, itemMemories := range plcInfo.BitMemories {
+						resultBit, err := readBitMemory(uint8(plcInfo.SlaveID), clientModbus, itemMemories.Address)
+						if err != nil {
+							//Forçar o fechamento da conexão
+							conn.Close()
+							//Adiciona FAIL como valor na chave que houve falha de leitura
+							resultsGetBitMemories[itemMemories.Name] = resultBit
+							//Chama o loop de verificação de conexão
+							_ = connCheck(conn)
+						} else {
+							// Salva o resultado encontrado
+							resultsGetBitMemories[itemMemories.Name] = resultBit
+						}
+
+					}
+
+				}
+				if len(plcInfo.WordMemories) != 0 {
+					// Varre items configurados no arquivo config.json
+					for _, itemMemories := range plcInfo.WordMemories {
+						resultWord, err := readWordMemory(
+							plcInfo.SlaveID,
+							clientModbus,
+							itemMemories.Address,
+							itemMemories.Format)
+
+						if err != nil {
+							//Forçar o fechamento e reabertura da conexão
+							conn.Close()
+							resultsGetWordMemories[itemMemories.Name] = resultWord
+							_ = connCheck(conn)
+						} else {
+							resultsGetWordMemories[itemMemories.Name] = resultWord
+						}
+					}
+
+				}
+
+				changesBit := functions.CompareMapsStrIFace(lastBitMemories, resultsGetBitMemories)
+				changesWord := functions.CompareMapsStrIFace(lastWordMemories, resultsGetWordMemories)
+
+				if !changesBit && !changesWord {
+					// Não houve alterações
+					fmt.Printf("routineMdbRead: dev name[%s]  Ip[%s:%s] No  Changes Oddurred - Sleeping %v Seconds...\n",
+						dev.Name, dev.Address, dev.Port, dev.ReadingTime)
+				} else {
+					// Holve alguma alteração gerar payload JSON da resposta
+					msg := utilsPkg.ExitPayloadMsg{
+						Address:       dev.Address,
+						Port:          dev.Port,
+						Name:          dev.Name,
+						Others:        "",
+						Protocol:      dev.Protocol,
+						ReadTimeStamp: readTime,
+						Topics:        dev.Topics,
+						BitMemories:   resultsGetBitMemories,
+						WordMemories:  resultsGetWordMemories,
+					}
+					fmt.Printf("Bit results in [%s] - [%v]\n", dev.Name, resultsGetBitMemories)
+					fmt.Printf("Word results in [%s] - [%v]\n", dev.Name, resultsGetWordMemories)
+
+					// Enviar payload json da mensagem
+					_ = MQTTSendMessageAutomatic(msg)
+				}
+
+				if !utilsPkg.LoopModbus {
+					// Thread do dispositivo foi encerrada
+					fmt.Printf("routineMdbRead: dev name[%s]  Ip[%s:%s] Encerrada em %v\n",
+						dev.Name, dev.Address, dev.Port, dev.ReadingTime)
+					return
+				}
+
+				// Atualiza ultimos valores com os valores correntes
+				lastBitMemories = functions.CopyMap(resultsGetBitMemories).(map[string]interface{})
+				lastWordMemories = functions.CopyMap(resultsGetWordMemories).(map[string]interface{})
+
+				// Dorme conforme tempo configurado no arquivo json.config
+				time.Sleep(time.Duration(dev.ReadingTime) * time.Second)
+
+				readHour = time.Now()
+				readTime = readHour.Format("2006-01-02 15:04:05")
 			}
 
-			// Atualiza ultimos valores com os valores correntes
-			lastBitMemories = functions.CopyMap(resultsGetBitMemories).(map[string]interface{})
-			lastWordMemories = functions.CopyMap(resultsGetWordMemories).(map[string]interface{})
+			fmt.Println("SAIU DO LOOP")
 
-			// Dorme conforme tempo configurado no arquivo json.config
-			time.Sleep(time.Duration(dev.ReadingTime) * time.Second)
-
-			readHour = time.Now()
-			readTime = readHour.Format("2006-01-02 15:04:05")
 		}
-
-		fmt.Println("SAIU DO LOOP")
-
-		//}
 
 	}
 }

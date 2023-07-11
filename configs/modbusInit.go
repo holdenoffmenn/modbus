@@ -12,8 +12,9 @@ import (
 
 var devInf []utilsPkg.Devices
 
+
 func StartModbus() {
-	utilsPkg.LoopModbus = true
+	utilsPkg.LoopModbus = true	
 	devices, err := GetDevConfig()
 	if err != nil {
 		fmt.Printf("FAIL - Unable to capture data from plcConfig.json file. Error [%s]", err)
@@ -67,9 +68,15 @@ func StartRead(devices []utilsPkg.DevSettings) {
 			device.Name, device.Protocol, device.Address, device.Port)
 
 		statusPlc := packages.ConnModbus(device)
+		utilsPkg.Wg.Add(1)
 		if statusPlc {
+			go func(device utilsPkg.DevSettings) {
+				defer utilsPkg.Wg.Done()
+				packages.ReadInfoMdbs(device)
+			}(device)
+
 			//modbusPkg.MQTTSendStatusDevice(device, SettingsMqtt, statusPlc)
-			go packages.ReadInfoMdbs(device)
+			//go packages.ReadInfoMdbs(device)
 
 			//go packages.ReadInfoMdbs(device, controller)
 		} else {
