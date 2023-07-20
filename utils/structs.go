@@ -19,19 +19,16 @@ type ConfigMQTT struct {
 	Password string `json:"password"`
 }
 
-//Formato da mensagem de entrada esperado pelo CallBack
-//TODO: Deixar informação em repositório externo
+// Formato da mensagem de entrada esperado pelo CallBack
+// TODO: Deixar informação em repositório externo
 type InputMQTTMsg struct {
 	Action string `json:"action"`
 }
 
-	var StopChan chan bool // Canal de sinalização para encerrar as goroutines
-	var DoneChan chan bool
-	var Wg       sync.WaitGroup // WaitGroup para aguardar a conclusão das goroutines
-	var WgGoroutines sync.WaitGroup
-
-
-var Loop bool = true
+var StopChan chan bool // Canal de sinalização para encerrar as goroutines
+var DoneChan chan bool
+var Wg sync.WaitGroup // WaitGroup para aguardar a conclusão das goroutines
+var WgGoroutines sync.WaitGroup
 
 type Devices struct {
 	Devices []DevSettings `json:"devices"`
@@ -59,19 +56,6 @@ type ExitPayloadMsg struct {
 	WordMemories  map[string]interface{}
 }
 
-type RoutineController struct {
-	StopChan chan struct{} // Canal de sinalização para encerrar as goroutines
-	DoneChan chan struct{}
-	Wg       sync.WaitGroup // WaitGroup para aguardar a conclusão das goroutines
-}
-
-// Função para encerrar as goroutines existentes
-func (c *RoutineController) Stop() {
-	close(c.StopChan) // Sinalize para encerrar as goroutines
-	//c.Wg.Wait()       // Aguarde a conclusão das goroutines
-	<-c.DoneChan
-}
-
 var MqttClient mqtt.Client
 
 var LoopModbus bool = true
@@ -94,4 +78,13 @@ type Address struct {
 type Data struct {
 	BitMemories  map[string]interface{} `json:"bitMemories"`
 	WordMemories map[string]interface{} `json:"wordMemories"`
+}
+
+// Send Status Protocol
+type StatusProtocol struct{
+	Operation Info `json:"operation"`
+}
+type Info struct {
+	Status   string `json:"status"`
+	Protocol string `json:"protocol"`
 }

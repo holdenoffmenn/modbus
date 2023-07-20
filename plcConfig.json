@@ -5,7 +5,7 @@
             {
                 "address": "172.16.16.61",
                 "port": "502",
-                "name": "PLC Mel 12000",
+                "name": "PLC asdasds",
                 "protocol": "modbus",
                 "readingTime": 5,
                 "topics": [

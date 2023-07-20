@@ -76,7 +76,6 @@ func MqttCommunication() error {
 
 		return nil
 	}
-
 	return fmt.Errorf("Missing_Informations")
 
 }
@@ -87,7 +86,11 @@ func DecodeMsg(msg utilsPkg.InputMQTTMsg) {
 		fmt.Println("Start Modbus")
 		StartModbus()
 	case "restart":
+		//utilsPkg.DoneChan <- false
 		fmt.Println("Reboot Modbus")
+		utilsPkg.LoopModbus = false
+		utilsPkg.Wg.Wait()
+		StartModbus()
 	case "stop":
 		fmt.Println("Stop Modbus")
 		utilsPkg.LoopModbus = false

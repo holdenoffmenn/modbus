@@ -61,14 +61,12 @@ func ReadInfoMdbs(dev utilsPkg.DevSettings) {
 		readTime := readHour.Format("2006-01-02 15:04:05")
 
 		//loop infinito de verificação, repetindo conforme o tempo informado no arquivo config.json
-		for {
+		for utilsPkg.LoopModbus {
 			select {
 			case <-utilsPkg.DoneChan:
 				fmt.Printf("\n\nLeitura do IP [%s] interrompida.\n\n", dev.Name)
 				return
 			default:
-
-				fmt.Println("-----> AINDA RODANDO ==> ", dev.Name)
 				fmt.Printf("routineMdbRead: dev name[%s]  Address[%s:%s] readTime[%v]Reading\n",
 					dev.Name, dev.Address, dev.Port, readTime)
 				if len(plcInfo.BitMemories) != 0 {
@@ -139,12 +137,12 @@ func ReadInfoMdbs(dev utilsPkg.DevSettings) {
 					_ = MQTTSendMessageAutomatic(msg)
 				}
 
-				if !utilsPkg.LoopModbus {
-					// Thread do dispositivo foi encerrada
-					fmt.Printf("routineMdbRead: dev name[%s]  Ip[%s:%s] Encerrada em %v\n",
-						dev.Name, dev.Address, dev.Port, dev.ReadingTime)
-					return
-				}
+				// if !utilsPkg.LoopModbus {
+				// 	// Thread do dispositivo foi encerrada
+				// 	fmt.Printf("routineMdbRead: dev name[%s]  Ip[%s:%s] Encerrada em %v\n",
+				// 		dev.Name, dev.Address, dev.Port, dev.ReadingTime)
+				// 	return
+				// }
 
 				// Atualiza ultimos valores com os valores correntes
 				lastBitMemories = functions.CopyMap(resultsGetBitMemories).(map[string]interface{})
@@ -156,8 +154,6 @@ func ReadInfoMdbs(dev utilsPkg.DevSettings) {
 				readHour = time.Now()
 				readTime = readHour.Format("2006-01-02 15:04:05")
 			}
-
-			fmt.Println("SAIU DO LOOP")
 
 		}
 
