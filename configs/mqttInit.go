@@ -3,9 +3,11 @@ package configs
 import (
 	"fmt"
 	"os"
+	"time"
 
 	mqtt "github.com/eclipse/paho.mqtt.golang"
 	"github.com/google/uuid"
+	//"github.com/holdenoffmenn/modbus/configs"
 	"github.com/holdenoffmenn/modbus/pkg"
 	utilsPkg "github.com/holdenoffmenn/modbus/utils"
 )
@@ -16,6 +18,7 @@ var MqttOptions *mqtt.ClientOptions
 
 var MqttBrokerInfo utilsPkg.ConfigMQTT
 var Hostname string
+
 
 func SetMqttBroker() {
 	fmt.Println("Starting assign values to public variables.")
@@ -56,6 +59,9 @@ func MqttCommunication() error {
 
 		MqttOptions.OnConnect = func(c mqtt.Client) {
 			//Subscriber in error and write channels
+			if MqttToken = c.Subscribe("general", 0, messageHandler); MqttToken.Wait() && MqttToken.Error() != nil {
+				fmt.Printf("%v", MqttToken.Error())
+			}
 			if MqttToken = c.Subscribe("modbus", 0, messageHandler); MqttToken.Wait() && MqttToken.Error() != nil {
 				fmt.Printf("%v", MqttToken.Error())
 			}
@@ -85,20 +91,20 @@ func DecodeMsg(msg utilsPkg.InputMQTTMsg) {
 	case "start":
 		fmt.Println("Start Modbus")
 		StartModbus()
+		
 	case "restart":
-		//utilsPkg.DoneChan <- false
-		fmt.Println("Reboot Modbus")
-		utilsPkg.LoopModbus = false
+		close(utilsPkg.DoneChan)		
 		utilsPkg.Wg.Wait()
+		fmt.Println("Reboot Modbus")
+		
+
+		time.Sleep(1000 * time.Millisecond)
+		
 		StartModbus()
 	case "stop":
 		fmt.Println("Stop Modbus")
-		utilsPkg.LoopModbus = false
+		close(utilsPkg.DoneChan)
 		utilsPkg.Wg.Wait()
-		//close(utilsPkg.StopChan)
-		// utilsPkg.WgGoroutines.Wait()
-
-		utilsPkg.LoopModbus = false
 		fmt.Println("Leitura do Modbus concluída.")
 
 	default:

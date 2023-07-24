@@ -93,3 +93,32 @@ func MQTTSendMessageAutomatic(msg utilsPkg.ExitPayloadMsg) bool {
 // 		}
 // 	}
 // }
+
+func StatusMessageSender(payload utilsPkg.MessageStatus){
+
+}
+
+func Sender(data interface{}, topics []string) bool{
+	
+	jsonPayload, err := json.Marshal(data)
+	if err != nil {
+		panic(err) //Check - não pode parar o programa
+	}
+
+	if !utilsPkg.MqttClient.IsConnected() {
+		fmt.Printf("ioMsgMqtt:MQTTSendMessageAutomatic: FAIL to connect with MQTT")
+	} else {
+		for _, channelMqtt := range topics {
+			token := utilsPkg.MqttClient.Publish(channelMqtt, 0, false, jsonPayload)
+			token.Wait()
+
+			if token.Error() != nil {
+				fmt.Printf("ioMsgMqtt:MQTTSendMessageAutomatic: FAIL to send a MQTT")
+				fmt.Printf("%v", token.Error())
+			}
+
+		}
+	}
+
+	return true
+}

@@ -3,7 +3,6 @@ package main
 import (
 	"fmt"
 	"time"
-
 	configsPkg "github.com/holdenoffmenn/modbus/configs"
 )
 
@@ -14,6 +13,8 @@ func main() {
 		fmt.Println("FAIL - Is not possible start communication with broker")
 		return
 	}
+	configsPkg.SendStatusProtocol("running")
+	time.Sleep(500 * time.Millisecond)
 	configsPkg.StartModbus()
 
 	for {

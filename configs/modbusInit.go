@@ -4,20 +4,22 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+
+	//"sync"
 	"time"
 
+	"github.com/holdenoffmenn/modbus/pkg"
 	packages "github.com/holdenoffmenn/modbus/pkg"
 	utilsPkg "github.com/holdenoffmenn/modbus/utils"
 )
 
 var devInf []utilsPkg.Devices
 
-
 func StartModbus() {
-	utilsPkg.LoopModbus = true	
+	utilsPkg.CreateChannel()
 	devices, err := GetDevConfig()
 	if err != nil {
-		fmt.Printf("FAIL - Unable to capture data from plcConfig.json file. Error [%s]", err)
+		fmt.Printf("FAIL - Unable to capture data from deviceConfig.json file. Error [%s]", err)
 		return
 	}
 	StartRead(devices)
@@ -26,9 +28,7 @@ func StartModbus() {
 
 func GetDevConfig() ([]utilsPkg.DevSettings, error) {
 	var itemInf []utilsPkg.DevSettings
-	var devConfig string = "plcConfig.json"
-
-	file, err := os.ReadFile(devConfig)
+	file, err := os.ReadFile(utilsPkg.FilePath)
 	if err != nil {
 		fmt.Println("Fail to read JSON File: ", err)
 		return nil, err
@@ -62,23 +62,19 @@ func GetDevConfig() ([]utilsPkg.DevSettings, error) {
 }
 
 func StartRead(devices []utilsPkg.DevSettings) {
-
 	for _, device := range devices {
 		fmt.Printf("StartRead: Name[%s] Protocol[%s] Ip:Port[%s:%s]\n",
 			device.Name, device.Protocol, device.Address, device.Port)
 
 		statusPlc := packages.ConnModbus(device)
-		utilsPkg.Wg.Add(1)
+		
+
 		if statusPlc {
+			utilsPkg.Wg.Add(1)
 			go func(device utilsPkg.DevSettings) {
-				defer utilsPkg.Wg.Done()
 				packages.ReadInfoMdbs(device)
 			}(device)
-
-			//modbusPkg.MQTTSendStatusDevice(device, SettingsMqtt, statusPlc)
-			//go packages.ReadInfoMdbs(device)
-
-			//go packages.ReadInfoMdbs(device, controller)
+			
 		} else {
 			fmt.Println("Erro - Dispositivo não está online")
 			//modbusPkg.MQTTSendStatusDevice(device, SettingsMqtt, statusPlc)
@@ -87,4 +83,12 @@ func StartRead(devices []utilsPkg.DevSettings) {
 		time.Sleep(1 * time.Second)
 	}
 
+}
+
+func SendStatusProtocol(status string) {
+	var data utilsPkg.MessageStatus
+	data.MessageType = "status"
+	data.Data.Status = status
+	data.Data.Name = "modbus"
+	pkg.Sender(data, utilsPkg.Topics)
 }

@@ -1,6 +1,7 @@
 package pkg
 
 import (
+	//"sync"
 	"time"
 
 	utilsPkg "github.com/holdenoffmenn/modbus/utils"
@@ -36,6 +37,8 @@ var readHour time.Time
 
 // ReadInfoMdbs will read informations from device
 func ReadInfoMdbs(dev utilsPkg.DevSettings) {
+
+	defer utilsPkg.Wg.Done()
 	//Start Connection
 	conn := modbusLib.NewTCPClientHandler(dev.Address + ":" + dev.Port)
 	conn.Timeout = 3 * time.Minute
@@ -59,13 +62,15 @@ func ReadInfoMdbs(dev utilsPkg.DevSettings) {
 		clientModbus := modbusLib.NewClient(conn)
 		readHour = time.Now()
 		readTime := readHour.Format("2006-01-02 15:04:05")
+		
 
 		//loop infinito de verificação, repetindo conforme o tempo informado no arquivo config.json
-		for utilsPkg.LoopModbus {
+		for utilsPkg.LoopModbus{
 			select {
 			case <-utilsPkg.DoneChan:
-				fmt.Printf("\n\nLeitura do IP [%s] interrompida.\n\n", dev.Name)
-				return
+				 	return
+				 		
+
 			default:
 				fmt.Printf("routineMdbRead: dev name[%s]  Address[%s:%s] readTime[%v]Reading\n",
 					dev.Name, dev.Address, dev.Port, readTime)

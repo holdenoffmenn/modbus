@@ -1,0 +1,124 @@
+[
+    {
+        "devices": [           
+            
+            {
+                "address": "172.16.16.61",
+                "port": "502",
+                "name": "PLC asdasds",
+                "protocol": "modbus",
+                "readingTime": 5,
+                "topics": [
+                    "plcmel",
+                    "modbus-test"
+                ],
+                "data": [
+                    {
+                        "bitMemories": [
+                            {
+                                "address": 40964,
+                                "name": "Y0.4"
+                            }
+                        ],
+                        "slaveId": 1,
+                        "wordMemories": [
+                            {
+                                "address": 1,
+                                "format": 16,
+                                "name": "D1"
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
+                "address": "172.16.16.61",
+                "port": "502",
+                "name": "PLC Troy 0",
+                "protocol": "modbus",
+                "readingTime": 5,
+                "topics": [
+                    "alldevices",
+                    "modbus-test"
+                ],
+                "data": [
+                    {
+                        "bitMemories": [
+                            {
+                                "address": 40960,
+                                "name": "Y0.0"
+                            }
+                        ],
+                        "slaveId": 1,
+                        "wordMemories": [
+                            {
+                                "address": 0,
+                                "format": 16,
+                                "name": "D0"
+                            }
+                        ]
+                    }
+                ]
+            }, 
+            {
+                "address": "172.16.16.61",
+                "port": "502",
+                "name": "PLC Dora 1",
+                "protocol": "modbus",
+                "readingTime": 5,
+                "topics": [
+                    "alldevices",
+                    "modbus-test"
+                ],
+                "data": [
+                    {
+                        "bitMemories": [
+                            {
+                                "address": 40961,
+                                "name": "Y0.1"
+                            }
+                        ],
+                        "slaveId": 1,
+                        "wordMemories": [
+                            {
+                                "address": 1,
+                                "format": 16,
+                                "name": "D1"
+                            }
+                        ]
+                    }
+                ]
+            }, 
+            {
+                "address": "172.16.16.61",
+                "port": "502",
+                "name": "PLC Kayla 2",
+                "protocol": "modbus",
+                "readingTime": 5,
+                "topics": [
+                    "alldevices",
+                    "modbus-test"
+                ],
+                "data": [
+                    {
+                        "bitMemories": [
+                            {
+                                "address": 40962,
+                                "name": "Y0.2"
+                            }
+                        ],
+                        "slaveId": 1,
+                        "wordMemories": [
+                            {
+                                "address": 2,
+                                "format": 16,
+                                "name": "D2"
+                            }
+                        ]
+                    }
+                ]
+            }            
+            
+        ]
+    }
+]

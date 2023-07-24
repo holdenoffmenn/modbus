@@ -6,11 +6,7 @@ import (
 	mqtt "github.com/eclipse/paho.mqtt.golang"
 )
 
-// Informações do MQTT Broker Local
-var MqttAddress string = "localhost"
-var MqttPort string = "1883"
-var MqttUser string = ""
-var MqttPassword string = ""
+
 
 type ConfigMQTT struct {
 	Server   string `json:"server"`
@@ -25,10 +21,11 @@ type InputMQTTMsg struct {
 	Action string `json:"action"`
 }
 
-var StopChan chan bool // Canal de sinalização para encerrar as goroutines
-var DoneChan chan bool
-var Wg sync.WaitGroup // WaitGroup para aguardar a conclusão das goroutines
-var WgGoroutines sync.WaitGroup
+// Criando um canal booleano
+
+ var Wg sync.WaitGroup // WaitGroup para aguardar a conclusão das goroutines
+
+
 
 type Devices struct {
 	Devices []DevSettings `json:"devices"`
@@ -87,4 +84,22 @@ type StatusProtocol struct{
 type Info struct {
 	Status   string `json:"status"`
 	Protocol string `json:"protocol"`
+}
+
+//////////////////////////////////////////////////////////////////////////////////////////////
+
+type MessageStatus struct{
+	MessageType string `json:"messageType"`
+	Data MessageDataStatus `json:"data"`
+}
+
+type MessageDataStatus struct{
+	Status string `json:"status"`
+	Name string `json:"name"`
+}
+
+var DoneChan chan bool
+
+func CreateChannel(){
+	DoneChan = make(chan bool)
 }
