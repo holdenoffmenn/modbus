@@ -37,7 +37,7 @@ var readHour time.Time
 
 // ReadInfoMdbs will read informations from device
 func ReadInfoMdbs(dev utilsPkg.DevSettings) {
-
+	utilsPkg.StatusProtocol = true
 	defer utilsPkg.Wg.Done()
 	//Start Connection
 	conn := modbusLib.NewTCPClientHandler(dev.Address + ":" + dev.Port)
@@ -62,18 +62,18 @@ func ReadInfoMdbs(dev utilsPkg.DevSettings) {
 		clientModbus := modbusLib.NewClient(conn)
 		readHour = time.Now()
 		readTime := readHour.Format("2006-01-02 15:04:05")
-		
 
 		//loop infinito de verificação, repetindo conforme o tempo informado no arquivo config.json
-		for utilsPkg.LoopModbus{
+		for {
 			select {
 			case <-utilsPkg.DoneChan:
-				 	return
-				 		
+				utilsPkg.StatusProtocol = false				
+				return
 
 			default:
 				fmt.Printf("routineMdbRead: dev name[%s]  Address[%s:%s] readTime[%v]Reading\n",
 					dev.Name, dev.Address, dev.Port, readTime)
+					utilsPkg.StatusProtocol = true
 				if len(plcInfo.BitMemories) != 0 {
 
 					// Varre items configurados no arquivo config.json
@@ -85,7 +85,11 @@ func ReadInfoMdbs(dev utilsPkg.DevSettings) {
 							//Adiciona FAIL como valor na chave que houve falha de leitura
 							resultsGetBitMemories[itemMemories.Name] = resultBit
 							//Chama o loop de verificação de conexão
-							_ = connCheck(conn)
+							stateConn := connCheck(conn)
+							if !stateConn {
+								SendStatusDevice(dev, "disconnected")
+								return
+							}
 						} else {
 							// Salva o resultado encontrado
 							resultsGetBitMemories[itemMemories.Name] = resultBit
@@ -107,7 +111,11 @@ func ReadInfoMdbs(dev utilsPkg.DevSettings) {
 							//Forçar o fechamento e reabertura da conexão
 							conn.Close()
 							resultsGetWordMemories[itemMemories.Name] = resultWord
-							_ = connCheck(conn)
+							stateConn := connCheck(conn)
+							if !stateConn {
+								SendStatusDevice(dev, "disconnected")
+								return
+							}
 						} else {
 							resultsGetWordMemories[itemMemories.Name] = resultWord
 						}
@@ -140,21 +148,14 @@ func ReadInfoMdbs(dev utilsPkg.DevSettings) {
 
 					// Enviar payload json da mensagem
 					_ = MQTTSendMessageAutomatic(msg)
-				}
-
-				// if !utilsPkg.LoopModbus {
-				// 	// Thread do dispositivo foi encerrada
-				// 	fmt.Printf("routineMdbRead: dev name[%s]  Ip[%s:%s] Encerrada em %v\n",
-				// 		dev.Name, dev.Address, dev.Port, dev.ReadingTime)
-				// 	return
-				// }
+				}				
 
 				// Atualiza ultimos valores com os valores correntes
 				lastBitMemories = functions.CopyMap(resultsGetBitMemories).(map[string]interface{})
 				lastWordMemories = functions.CopyMap(resultsGetWordMemories).(map[string]interface{})
 
 				// Dorme conforme tempo configurado no arquivo json.config
-				time.Sleep(time.Duration(dev.ReadingTime) * time.Second)
+				time.Sleep(time.Duration(dev.ReadingTime) * time.Millisecond)
 
 				readHour = time.Now()
 				readTime = readHour.Format("2006-01-02 15:04:05")
@@ -175,7 +176,7 @@ func connCheck(conn *modbusLib.TCPClientHandler) bool {
 			connectionTry++
 			// Aguardar 5 segundos para tentar reconexão
 			fmt.Println("routineMdbRead: Waiting 1 minute to try reconnect. Attempt ", connectionTry)
-			time.Sleep(5 * time.Second)
+			time.Sleep(10 * time.Second)
 		} else if connectionTry > 30 {
 			fmt.Println("routineMdbRead: FAIL - Read Stop for ", conn.Address)
 			connectionTry = 0

@@ -3,8 +3,9 @@ package pkg
 import (
 	"encoding/json"
 
-	utilsPkg "github.com/holdenoffmenn/modbus/utils"
 	"fmt"
+
+	utilsPkg "github.com/holdenoffmenn/modbus/utils"
 
 	mqtt "github.com/eclipse/paho.mqtt.golang"
 )
@@ -57,49 +58,14 @@ func MQTTSendMessageAutomatic(msg utilsPkg.ExitPayloadMsg) bool {
 	return true
 }
 
-// It sends the status of the device in a specific channel in case the connection is lost.
-// func MQTTSendStatusDevice(device utilsPkg.DevSettings, settingsMqtt utilsPkg.SettingsMQTT, status bool) {
 
-// 	type msgMqtt struct {
-// 		Address  string `json:"address"`
-// 		Name     string `json:"name"`
-// 		Protocol string `json:"protocol"`
-// 		Status   bool   `json:"status"`
-// 	}
 
-// 	msg := msgMqtt{
-// 		Address:  device.Address + ":" + device.Port,
-// 		Name:     device.Name,
-// 		Protocol: device.Protocol,
-// 		Status:   status,
-// 	}
-
-// 	jsonPayload, err := json.Marshal(msg)
-// 	if err != nil {
-// 		panic(err) //Check - não pode parar o programa
-// 	}
-
-// 	if !MqttClient.IsConnected() {
-// 		logPkg.CtsLog.Error("ioMsgMqtt:MQTTSendStatusDevice: MQTT service is not conected!")
-// 	} else {
-
-// 		token := MqttClient.Publish(settingsMqtt.StatusDevice, 0, false, jsonPayload)
-// 		token.Wait() // Aguarda a conclusão da publicação
-
-// 		if token.Error() != nil {
-// 			logPkg.CtsLog.Error("ioMsgMqtt:MQTTSendStatusDevice: Unable to send message")
-// 		} else {
-// 			logPkg.CtsLog.Info("ioMsgMqtt:MQTTSendStatusDevice: Sent a MQTT message.")
-// 		}
-// 	}
-// }
-
-func StatusMessageSender(payload utilsPkg.MessageStatus){
+func StatusMessageSender(payload utilsPkg.MessageStatusProtocol) {
 
 }
 
-func Sender(data interface{}, topics []string) bool{
-	
+func Sender(data interface{}, topics []string) bool {
+
 	jsonPayload, err := json.Marshal(data)
 	if err != nil {
 		panic(err) //Check - não pode parar o programa

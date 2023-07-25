@@ -7,7 +7,6 @@ import (
 
 	//"sync"
 	"time"
-
 	"github.com/holdenoffmenn/modbus/pkg"
 	packages "github.com/holdenoffmenn/modbus/pkg"
 	utilsPkg "github.com/holdenoffmenn/modbus/utils"
@@ -16,12 +15,16 @@ import (
 var devInf []utilsPkg.Devices
 
 func StartModbus() {
-	utilsPkg.CreateChannel()
+	//Create a channel one time
+	//utilsPkg.ChanOnce.Do(utilsPkg.CreateChannel)
+	utilsPkg.CreateChannel()//0 ChanOnce.Do(utilsPkg.CreateChannel)
+	//Read a file from root
 	devices, err := GetDevConfig()
 	if err != nil {
 		fmt.Printf("FAIL - Unable to capture data from deviceConfig.json file. Error [%s]", err)
 		return
 	}
+	//Start a read devices
 	StartRead(devices)
 
 }
@@ -67,17 +70,18 @@ func StartRead(devices []utilsPkg.DevSettings) {
 			device.Name, device.Protocol, device.Address, device.Port)
 
 		statusPlc := packages.ConnModbus(device)
-		
 
 		if statusPlc {
+			
+			pkg.SendStatusDevice(device, "connected")
 			utilsPkg.Wg.Add(1)
 			go func(device utilsPkg.DevSettings) {
 				packages.ReadInfoMdbs(device)
 			}(device)
-			
+
 		} else {
 			fmt.Println("Erro - Dispositivo não está online")
-			//modbusPkg.MQTTSendStatusDevice(device, SettingsMqtt, statusPlc)
+			pkg.SendStatusDevice(device, "disconnected")
 		}
 
 		time.Sleep(1 * time.Second)
@@ -85,10 +89,3 @@ func StartRead(devices []utilsPkg.DevSettings) {
 
 }
 
-func SendStatusProtocol(status string) {
-	var data utilsPkg.MessageStatus
-	data.MessageType = "status"
-	data.Data.Status = status
-	data.Data.Name = "modbus"
-	pkg.Sender(data, utilsPkg.Topics)
-}

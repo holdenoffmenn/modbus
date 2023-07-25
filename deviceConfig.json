@@ -7,7 +7,7 @@
                 "port": "502",
                 "name": "PLC asdasds",
                 "protocol": "modbus",
-                "readingTime": 5,
+                "readingTime": 300,
                 "topics": [
                     "plcmel",
                     "modbus-test"
@@ -36,7 +36,7 @@
                 "port": "502",
                 "name": "PLC Troy 0",
                 "protocol": "modbus",
-                "readingTime": 5,
+                "readingTime": 200,
                 "topics": [
                     "alldevices",
                     "modbus-test"
@@ -65,7 +65,7 @@
                 "port": "502",
                 "name": "PLC Dora 1",
                 "protocol": "modbus",
-                "readingTime": 5,
+                "readingTime": 50,
                 "topics": [
                     "alldevices",
                     "modbus-test"
@@ -94,7 +94,7 @@
                 "port": "502",
                 "name": "PLC Kayla 2",
                 "protocol": "modbus",
-                "readingTime": 5,
+                "readingTime": 1000,
                 "topics": [
                     "alldevices",
                     "modbus-test"

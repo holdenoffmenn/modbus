@@ -7,7 +7,6 @@ import (
 
 	mqtt "github.com/eclipse/paho.mqtt.golang"
 	"github.com/google/uuid"
-	//"github.com/holdenoffmenn/modbus/configs"
 	"github.com/holdenoffmenn/modbus/pkg"
 	utilsPkg "github.com/holdenoffmenn/modbus/utils"
 )
@@ -18,7 +17,6 @@ var MqttOptions *mqtt.ClientOptions
 
 var MqttBrokerInfo utilsPkg.ConfigMQTT
 var Hostname string
-
 
 func SetMqttBroker() {
 	fmt.Println("Starting assign values to public variables.")
@@ -59,7 +57,7 @@ func MqttCommunication() error {
 
 		MqttOptions.OnConnect = func(c mqtt.Client) {
 			//Subscriber in error and write channels
-			if MqttToken = c.Subscribe("general", 0, messageHandler); MqttToken.Wait() && MqttToken.Error() != nil {
+			if MqttToken = c.Subscribe(MqttOptions.ClientID+"general", 0, messageHandler); MqttToken.Wait() && MqttToken.Error() != nil {
 				fmt.Printf("%v", MqttToken.Error())
 			}
 			if MqttToken = c.Subscribe("modbus", 0, messageHandler); MqttToken.Wait() && MqttToken.Error() != nil {
@@ -86,28 +84,67 @@ func MqttCommunication() error {
 
 }
 
-func DecodeMsg(msg utilsPkg.InputMQTTMsg) {
-	switch msg.Action {
-	case "start":
-		fmt.Println("Start Modbus")
-		StartModbus()
-		
-	case "restart":
-		close(utilsPkg.DoneChan)		
-		utilsPkg.Wg.Wait()
-		fmt.Println("Reboot Modbus")
-		
+func RunAction(msg utilsPkg.MessageInput) {
+	action, err := msg.Data.(map[string]interface{})["action"].(string)
+	if !err {
+		fmt.Println("Campo 'action' não é uma string ou está nomeado errado")
+		return
+	}
 
-		time.Sleep(1000 * time.Millisecond)
-		
-		StartModbus()
-	case "stop":
-		fmt.Println("Stop Modbus")
-		close(utilsPkg.DoneChan)
-		utilsPkg.Wg.Wait()
-		fmt.Println("Leitura do Modbus concluída.")
+	protocol, err := msg.Data.(map[string]interface{})["protocol"].(string)
+	if !err {
+		fmt.Println("Campo 'protocol' não é uma string ou está nomeado errado")
+		return
+	}
 
+	if protocol == "modbus" {
+		switch action {
+		//Start the read if the s
+		case "start":
+			if !utilsPkg.StatusProtocol {
+				fmt.Println("Start Modbus")
+				StartModbus()
+			} else {
+				fmt.Println("Rotinas já estão iniciadas")
+			}
+			
+
+		case "restart":
+			if utilsPkg.StatusProtocol {
+				close(utilsPkg.DoneChan)
+				utilsPkg.Wg.Wait()
+				fmt.Println("Reboot Modbus")
+				time.Sleep(1000 * time.Millisecond)
+				StartModbus()
+			} else {
+				fmt.Println("Reboot Modbus")
+				time.Sleep(1000 * time.Millisecond)
+				StartModbus()
+			}
+			//utilsPkg.StatusProtocol = true
+		case "stop":
+			if utilsPkg.StatusProtocol {
+				fmt.Println("Stop Modbus")
+				close(utilsPkg.DoneChan)
+				utilsPkg.Wg.Wait()
+				fmt.Println("Leitura do Modbus concluída.")
+				
+			} else {
+				fmt.Println("Canal já está fechado")
+				
+			}
+		default:
+			fmt.Println("Wrong Command")
+		}
+	}
+}
+
+func DecodeMsg(msg utilsPkg.MessageInput) {
+	switch msg.MessageType {
+	case "action":
+		fmt.Println("Processando a mensagem recebida!")
+		RunAction(msg)
 	default:
-		fmt.Println("Wrong Command")
+		fmt.Println("Comando desconhecido!")
 	}
 }

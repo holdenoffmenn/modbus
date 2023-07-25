@@ -6,8 +6,6 @@ import (
 	mqtt "github.com/eclipse/paho.mqtt.golang"
 )
 
-
-
 type ConfigMQTT struct {
 	Server   string `json:"server"`
 	Port     string `json:"port"`
@@ -22,10 +20,6 @@ type InputMQTTMsg struct {
 }
 
 // Criando um canal booleano
-
- var Wg sync.WaitGroup // WaitGroup para aguardar a conclusão das goroutines
-
-
 
 type Devices struct {
 	Devices []DevSettings `json:"devices"`
@@ -55,8 +49,7 @@ type ExitPayloadMsg struct {
 
 var MqttClient mqtt.Client
 
-var LoopModbus bool = true
-var Status bool = true
+var StatusProtocol bool = true
 
 type MqttMsgStruct struct {
 	Address       Address `json:"address"`
@@ -78,28 +71,58 @@ type Data struct {
 }
 
 // Send Status Protocol
-type StatusProtocol struct{
-	Operation Info `json:"operation"`
-}
-type Info struct {
-	Status   string `json:"status"`
-	Protocol string `json:"protocol"`
+// type StatusProtocol struct{
+// 	Operation Info `json:"operation"`
+// }
+// type Info struct {
+// 	Status   string `json:"status"`
+// 	Protocol string `json:"protocol"`
+// }
+
+// Decode da mensagem de entrada
+type MessageInput struct {
+	MessageType string      `json:"messageType"`
+	Data        interface{} `json:"data"`
 }
 
-//////////////////////////////////////////////////////////////////////////////////////////////
+// End input message
 
-type MessageStatus struct{
-	MessageType string `json:"messageType"`
-	Data MessageDataStatus `json:"data"`
+// Formato da mensagem de status do protocolo
+type MessageStatusProtocol struct {
+	MessageType string            `json:"messageType"`
+	Data        MessageDataStatus `json:"data"`
 }
 
-type MessageDataStatus struct{
+type MessageDataStatus struct {
 	Status string `json:"status"`
-	Name string `json:"name"`
+	Name   string `json:"name"`
 }
 
-var DoneChan chan bool
+//Fim
 
-func CreateChannel(){
+// Formato da mensagem de status do device
+type MessageDeviceStatus struct {
+	MessageType string                  `json:"messageType"`
+	Data        MessageDataDeviceStatus `json:"data"`
+}
+
+type MessageDataDeviceStatus struct {
+	Protocol string `json:"protocol"`
+	Device   string `json:"device"`
+	Status   string `json:"status"`
+}
+
+//Fim
+
+// Funções do channel de controle das Go Routines
+var (
+	DoneChan chan bool
+	ChanOnce sync.Once
+	Wg       sync.WaitGroup
+)
+
+func CreateChannel() {
 	DoneChan = make(chan bool)
 }
+
+//End Go Routines Control

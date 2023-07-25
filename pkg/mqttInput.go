@@ -8,16 +8,16 @@ import (
 	utilsPkg "github.com/holdenoffmenn/modbus/utils"
 )
 
-func MsgMQTTInput(msg mqtt.Message, client mqtt.Client) (utilsPkg.InputMQTTMsg, error ){
+func MsgMQTTInput(msg mqtt.Message, client mqtt.Client) (utilsPkg.MessageInput, error ){
 
-	var msgInf utilsPkg.InputMQTTMsg
-	err := json.Unmarshal(msg.Payload(), &msgInf)
+	var msgInput utilsPkg.MessageInput
+	err := json.Unmarshal(msg.Payload(), &msgInput)
 
 	if err != nil {
 		fmt.Printf("mqttInput:MsgMQTTInput: Fail to decode JSON Input Msg MQTT - Data[%s] err[%v]\n",
 			msg.Payload(), err)
-		return msgInf, err
+		return msgInput, err
 	}
-	fmt.Printf("mqttInput:MsgMQTTInput: msgMdbs.Protocol    [%s]\n", msgInf)	
-	return msgInf, err
+	fmt.Printf("mqttInput:MsgMQTTInput: msgMdbs.Protocol    [%s]\n", msgInput)	
+	return msgInput, err
 }
