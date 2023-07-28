@@ -60,12 +60,12 @@ func MqttCommunication() error {
 			if MqttToken = c.Subscribe(MqttOptions.ClientID+"general", 0, messageHandler); MqttToken.Wait() && MqttToken.Error() != nil {
 				fmt.Printf("%v", MqttToken.Error())
 			}
-			if MqttToken = c.Subscribe("modbus", 0, messageHandler); MqttToken.Wait() && MqttToken.Error() != nil {
+			if MqttToken = c.Subscribe(MqttOptions.ClientID+"modbus", 0, messageHandler); MqttToken.Wait() && MqttToken.Error() != nil {
 				fmt.Printf("%v", MqttToken.Error())
 			}
 		}
 
-		utilsPkg.MqttClient = mqtt.NewClient(MqttOptions)
+ 		utilsPkg.MqttClient = mqtt.NewClient(MqttOptions)
 		MqttToken = utilsPkg.MqttClient.Connect()
 
 		if MqttToken.Wait() && MqttToken.Error() != nil {
