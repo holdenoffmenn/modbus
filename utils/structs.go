@@ -116,13 +116,17 @@ type MessageDataDeviceStatus struct {
 
 // Funções do channel de controle das Go Routines
 var (
+	IdentifierRoutine rune
 	DoneChan chan bool
-	ChanOnce sync.Once
+	// ChanOnce sync.Once
 	Wg       sync.WaitGroup
+	StopChannels = make(map[rune]chan struct{})
+	
 )
 
 func CreateChannel() {
 	DoneChan = make(chan bool)
+	StopChannels[IdentifierRoutine] = make(chan struct{})
 }
 
 //End Go Routines Control

@@ -36,7 +36,7 @@ var connectionTry int = 0
 var readHour time.Time
 
 // ReadInfoMdbs will read informations from device
-func ReadInfoMdbs(dev utilsPkg.DevSettings) {
+func ReadInfoMdbs(dev utilsPkg.DevSettings, identifier rune) {
 	utilsPkg.StatusProtocol = true
 	defer utilsPkg.Wg.Done()
 	//Start Connection
@@ -67,6 +67,9 @@ func ReadInfoMdbs(dev utilsPkg.DevSettings) {
 		for {
 			select {
 			case <-utilsPkg.DoneChan:
+				utilsPkg.StatusProtocol = false				
+				return
+			case <-utilsPkg.StopChannels[identifier]:
 				utilsPkg.StatusProtocol = false				
 				return
 

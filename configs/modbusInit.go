@@ -15,9 +15,7 @@ import (
 var devInf []utilsPkg.Devices
 
 func StartModbus() {
-	//Create a channel one time
-	//utilsPkg.ChanOnce.Do(utilsPkg.CreateChannel)
-	utilsPkg.CreateChannel()//0 ChanOnce.Do(utilsPkg.CreateChannel)
+	utilsPkg.CreateChannel()
 	//Read a file from root
 	devices, err := GetDevConfig()
 	if err != nil {
@@ -71,12 +69,12 @@ func StartRead(devices []utilsPkg.DevSettings) {
 
 		statusPlc := packages.ConnModbus(device)
 
-		if statusPlc {
-			
+		if statusPlc {			
 			pkg.SendStatusDevice(device, "connected")
 			utilsPkg.Wg.Add(1)
+			identifier := rune(device.Name[0])
 			go func(device utilsPkg.DevSettings) {
-				packages.ReadInfoMdbs(device)
+				packages.ReadInfoMdbs(device, identifier)
 			}(device)
 
 		} else {

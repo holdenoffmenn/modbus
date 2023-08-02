@@ -60,12 +60,12 @@ func MqttCommunication() error {
 			if MqttToken = c.Subscribe(MqttOptions.ClientID+"general", 0, messageHandler); MqttToken.Wait() && MqttToken.Error() != nil {
 				fmt.Printf("%v", MqttToken.Error())
 			}
-			if MqttToken = c.Subscribe(MqttOptions.ClientID+"modbus", 0, messageHandler); MqttToken.Wait() && MqttToken.Error() != nil {
+			if MqttToken = c.Subscribe("modbus", 0, messageHandler); MqttToken.Wait() && MqttToken.Error() != nil {
 				fmt.Printf("%v", MqttToken.Error())
 			}
 		}
 
- 		utilsPkg.MqttClient = mqtt.NewClient(MqttOptions)
+		utilsPkg.MqttClient = mqtt.NewClient(MqttOptions)
 		MqttToken = utilsPkg.MqttClient.Connect()
 
 		if MqttToken.Wait() && MqttToken.Error() != nil {
@@ -107,7 +107,6 @@ func RunAction(msg utilsPkg.MessageInput) {
 			} else {
 				fmt.Println("Rotinas já estão iniciadas")
 			}
-			
 
 		case "restart":
 			if utilsPkg.StatusProtocol {
@@ -128,11 +127,23 @@ func RunAction(msg utilsPkg.MessageInput) {
 				close(utilsPkg.DoneChan)
 				utilsPkg.Wg.Wait()
 				fmt.Println("Leitura do Modbus concluída.")
-				
+
 			} else {
 				fmt.Println("Canal já está fechado")
-				
+
 			}
+		case "123":
+
+			input := "A"
+			identifier := rune(input[0])
+			if ch, ok := utilsPkg.StopChannels[identifier]; ok {
+				close(ch)
+				utilsPkg.Wg.Wait()
+				delete(utilsPkg.StopChannels, identifier)
+				fmt.Printf("Goroutine %s stopped.\n", "input")
+			}
+			
+
 		default:
 			fmt.Println("Wrong Command")
 		}
